@@ -222,12 +222,12 @@ body {
 /* ==================== ÁREA DE UPLOAD ==================== */
 .upload-area-principal {
     position: fixed;
-    bottom: 80px;
-    left: 20px;
+    bottom: 10px;
+    left: 10px;
     z-index: 1002;
     background: rgba(0,0,0,0.8);
     padding: 15px 25px;
-    border-radius: 50px;
+    border-radius: 15px;
     backdrop-filter: blur(10px);
     cursor: pointer;
     transition: all 0.3s;
@@ -289,13 +289,13 @@ body {
 /* ==================== BOTÃO DO DASHBOARD ==================== */
 .view-dashboard-btn {
     position: fixed;
-    bottom: 20px;
+    bottom: 10px;
     left: 260px;
     background: rgba(0,0,0,0.8);
     color: white;
     border: 2px solid #ffd700;
     padding: 12px 24px;
-    border-radius: 30px;
+    border-radius: 10px;
     cursor: pointer;
     z-index: 1002;
     font-size: 1em;
