@@ -11,7 +11,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            user-select: none; /* Evita seleção de texto na TV */
+            user-select: none;
         }
 
         body {
@@ -233,27 +233,77 @@
             50% { opacity: 1; }
         }
 
-        /* Dashboard admin (escondido atrás do player) */
-        .admin-panel {
+        /* ==================== ÁREA DE UPLOAD NA TELA PRINCIPAL ==================== */
+        .upload-area-principal {
             position: fixed;
             bottom: 20px;
             left: 20px;
-            z-index: 9999;
-            background: rgba(0,0,0,0.7);
-            padding: 10px 20px;
-            border-radius: 10px;
-            color: white;
-            font-size: 0.8em;
+            z-index: 10002;
+            background: rgba(0,0,0,0.8);
+            padding: 15px 25px;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
             cursor: pointer;
             transition: all 0.3s;
-            backdrop-filter: blur(5px);
+            border: 2px solid #ffd700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .admin-panel:hover {
-            background: rgba(0,0,0,0.9);
+        .upload-area-principal:hover {
+            background: rgba(0,0,0,0.95);
             transform: scale(1.05);
+            border-color: #fff;
         }
 
+        .upload-area-principal input {
+            display: none;
+        }
+
+        .upload-label-principal {
+            color: white;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .upload-label-principal span {
+            font-size: 1.2em;
+        }
+
+        .status-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 10002;
+            background: rgba(0,0,0,0.7);
+            padding: 8px 16px;
+            border-radius: 20px;
+            color: white;
+            font-size: 0.8em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4caf50;
+            animation: pulse-green 2s infinite;
+        }
+
+        @keyframes pulse-green {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Dashboard admin (mantido para visualização de dados) */
         .dashboard-admin {
             position: fixed;
             top: 0;
@@ -261,7 +311,7 @@
             width: 100%;
             height: 100%;
             background: white;
-            z-index: 9998;
+            z-index: 9999;
             overflow-y: auto;
             display: none;
         }
@@ -280,51 +330,30 @@
             padding: 10px 20px;
             border-radius: 5px;
             cursor: pointer;
-            z-index: 9999;
+            z-index: 10000;
             font-size: 1em;
         }
 
-        /* Estilos do dashboard */
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
+        .admin-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .stats {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            padding: 20px;
+            background: #e3f2fd;
+        }
+
+        .stat-item {
             background: white;
+            padding: 8px 16px;
             border-radius: 20px;
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .upload-area {
-            background: #f8f9fa;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .upload-box {
-            border: 2px dashed #667eea;
-            border-radius: 10px;
-            padding: 40px;
-            background: white;
-            cursor: pointer;
-        }
-
-        .upload-box input {
-            display: none;
-        }
-
-        .upload-label {
-            display: inline-block;
-            padding: 12px 30px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 25px;
-            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .dashboard-content {
@@ -341,6 +370,13 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
 
+        .chart-container h3 {
+            margin-bottom: 20px;
+            color: #333;
+            border-left: 4px solid #667eea;
+            padding-left: 15px;
+        }
+
         canvas {
             max-height: 400px;
             width: 100%;
@@ -348,6 +384,8 @@
 
         .table-container {
             grid-column: span 2;
+            background: white;
+            border-radius: 15px;
             padding: 20px;
             overflow-x: auto;
         }
@@ -368,18 +406,18 @@
             color: white;
         }
 
-        .stats {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            padding: 20px;
-            background: #e3f2fd;
-        }
-
-        .stat-item {
-            background: white;
-            padding: 8px 16px;
+        .view-dashboard-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 200px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            padding: 10px 20px;
             border-radius: 20px;
+            cursor: pointer;
+            z-index: 10002;
+            font-size: 0.9em;
         }
     </style>
 </head>
@@ -412,51 +450,50 @@
     </div>
 </div>
 
-<!-- Botão Admin (canto inferior esquerdo) -->
-<div class="admin-panel" id="adminBtn">
-    ⚙️ ADMIN - Carregar Planilha
+<!-- ÁREA DE UPLOAD VISÍVEL NA TELA PRINCIPAL -->
+<div class="upload-area-principal" onclick="document.getElementById('fileInputPrincipal').click()">
+    <input type="file" id="fileInputPrincipal" accept=".xlsx, .xls, .csv">
+    <div class="upload-label-principal">
+        <span>📂</span>
+        <span>CARREGAR PLANILHA DA SEMANA</span>
+    </div>
 </div>
 
-<!-- Dashboard Admin (escondido) -->
+<!-- Indicador de Status -->
+<div class="status-indicator">
+    <div class="status-dot"></div>
+    <span id="statusTexto">Aguardando planilha</span>
+</div>
+
+<!-- Botão para abrir dashboard de visualização -->
+<button class="view-dashboard-btn" onclick="abrirAdmin()">📊 Ver Dashboard Completo</button>
+
+<!-- Dashboard Admin (para visualização detalhada) -->
 <div id="adminDashboard" class="dashboard-admin">
     <button class="close-admin" onclick="fecharAdmin()">✕ Fechar</button>
-    <div class="container">
-        <div class="header">
-            <h1>📊 Painel Administrativo</h1>
-            <p>Upload de planilha e configurações</p>
-        </div>
+    <div class="admin-header">
+        <h1>📊 Dashboard Detalhado</h1>
+        <p>Análise completa de presença por turma</p>
+    </div>
 
-        <div class="upload-area">
-            <div class="upload-box" onclick="document.getElementById('fileInput').click()">
-                <input type="file" id="fileInput" accept=".xlsx, .xls, .csv">
-                <div class="upload-label">
-                    📂 Selecionar Planilha da Semana
-                </div>
-                <p style="margin-top: 20px; color: #666;">
-                    Após o upload, o painel de exibição será atualizado automaticamente em loop
-                </p>
-            </div>
-        </div>
+    <div class="stats" id="statsPanel">
+        <div class="stat-item">📚 Total de Turmas: <span id="totalTurmas">0</span></div>
+        <div class="stat-item">👨‍🎓 Total de Alunos: <span id="totalAlunos">0</span></div>
+        <div class="stat-item">📈 Média Geral: <span id="mediaGeral">0%</span></div>
+    </div>
 
-        <div class="stats" id="statsPanel">
-            <div class="stat-item">📚 Total de Turmas: <span id="totalTurmas">0</span></div>
-            <div class="stat-item">👨‍🎓 Total de Alunos: <span id="totalAlunos">0</span></div>
-            <div class="stat-item">📈 Média Geral: <span id="mediaGeral">0%</span></div>
+    <div class="dashboard-content">
+        <div class="chart-container">
+            <h3>📈 Presença por Turma</h3>
+            <canvas id="presencaChart"></canvas>
         </div>
-
-        <div class="dashboard-content">
-            <div class="chart-container">
-                <h3>📈 Presença por Turma</h3>
-                <canvas id="presencaChart"></canvas>
-            </div>
-            <div class="chart-container">
-                <h3>⚠️ Faltas Amparadas</h3>
-                <canvas id="faltasChart"></canvas>
-            </div>
-            <div class="table-container">
-                <h3>📋 Detalhamento das Turmas</h3>
-                <div id="tableWrapper"></div>
-            </div>
+        <div class="chart-container">
+            <h3>⚠️ Faltas Amparadas</h3>
+            <canvas id="faltasChart"></canvas>
+        </div>
+        <div class="table-container">
+            <h3>📋 Detalhamento das Turmas</h3>
+            <div id="tableWrapper"></div>
         </div>
     </div>
 </div>
@@ -469,7 +506,6 @@
     let slideIndex = 0;
     let turmasParaPlayer = [];
     let loopAtivo = true;
-    let progressoInterval = null;
 
     // ==================== FUNÇÕES DO PLAYER EM LOOP ====================
     function iniciarPlayer(turmas) {
@@ -479,7 +515,6 @@
         
         totalSlidesSpan.textContent = turmas.length;
         
-        // Criar slides
         container.innerHTML = '';
         turmas.forEach((turma, idx) => {
             const slide = document.createElement('div');
@@ -509,10 +544,13 @@
             container.appendChild(slide);
         });
         
-        // Iniciar loop
         slideIndex = 0;
         pararPlayer();
         iniciarLoop();
+        
+        // Atualizar status
+        document.getElementById('statusTexto').textContent = `${turmas.length} turmas carregadas`;
+        document.getElementById('statusTexto').style.color = '#4caf50';
     }
 
     function mostrarSlidePlayer(index) {
@@ -527,7 +565,6 @@
             slides[index].classList.add('active');
             document.getElementById('slideAtualPlayer').textContent = index + 1;
             
-            // Animar a barra de porcentagem
             const turma = turmasParaPlayer[index];
             const barElement = document.getElementById(`presencaBarPlayer_${index}`);
             const numElement = document.getElementById(`presencaNumPlayer_${index}`);
@@ -554,7 +591,7 @@
 
     function iniciarLoop() {
         const total = turmasParaPlayer.length;
-        let tempoPorSlide = 5000; // 5 segundos por slide
+        let tempoPorSlide = 5000;
         
         function avancarSlide() {
             if (!loopAtivo) return;
@@ -562,18 +599,15 @@
             slideIndex++;
             if (slideIndex >= total) {
                 slideIndex = 0;
-                // Reiniciar barra de progresso ao completar ciclo
                 resetProgressoBar();
             }
             mostrarSlidePlayer(slideIndex);
             atualizarBarraProgresso(slideIndex, total);
         }
         
-        // Mostrar primeiro slide
         mostrarSlidePlayer(0);
         atualizarBarraProgresso(0, total);
         
-        // Configurar intervalo
         if (playerInterval) clearInterval(playerInterval);
         playerInterval = setInterval(avancarSlide, tempoPorSlide);
     }
@@ -614,7 +648,7 @@
     function toggleFullscreen() {
         if (!document.fullscreenElement) {
             playerElement.requestFullscreen().catch(err => {
-                console.log(`Erro ao entrar em tela cheia: ${err.message}`);
+                console.log(`Erro: ${err.message}`);
             });
         } else {
             document.exitFullscreen();
@@ -622,13 +656,6 @@
     }
     
     playerElement.addEventListener('click', toggleFullscreen);
-    
-    // Escutar mudanças na tela cheia para ajustar layout
-    document.addEventListener('fullscreenchange', () => {
-        if (document.fullscreenElement) {
-            playerElement.style.cursor = 'pointer';
-        }
-    });
 
     // ==================== PROCESSAMENTO DOS DADOS ====================
     function processarDados(dados) {
@@ -640,7 +667,7 @@
         });
 
         if (turmasValidas.length === 0) {
-            alert('Nenhum dado válido encontrado na planilha. Verifique as colunas.');
+            alert('Nenhum dado válido encontrado na planilha. Verifique as colunas: Turma, Alunos Ativos, (%) Presença, % Faltas Amparadas');
             return false;
         }
 
@@ -664,7 +691,6 @@
         document.getElementById('totalAlunos').textContent = totalAlunos;
         document.getElementById('mediaGeral').textContent = mediaPresenca.toFixed(1) + '%';
 
-        // Gráficos
         const labels = dadosAtuais.map(t => t.turma);
         const presencas = dadosAtuais.map(t => t.presenca);
         const faltas = dadosAtuais.map(t => t.faltasAmparadas);
@@ -709,7 +735,6 @@
             }
         });
 
-        // Tabela
         const wrapper = document.getElementById('tableWrapper');
         let html = '<table><thead><tr><th>Turma</th><th>Alunos</th><th>Presença</th><th>Faltas Amparadas</th><th>Curso</th></tr></thead><tbody>';
         dadosAtuais.forEach(t => {
@@ -731,13 +756,13 @@
         document.getElementById('adminDashboard').classList.remove('active');
     }
 
-    document.getElementById('adminBtn').addEventListener('click', abrirAdmin);
-
-    // Upload da planilha
-    document.getElementById('fileInput').addEventListener('change', function(e) {
+    // ==================== UPLOAD DA PLANILHA ====================
+    document.getElementById('fileInputPrincipal').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
 
+        document.getElementById('statusTexto').textContent = 'Carregando...';
+        
         const reader = new FileReader();
         reader.onload = function(e) {
             const data = new Uint8Array(e.target.result);
@@ -746,10 +771,9 @@
             const jsonData = XLSX.utils.sheet_to_json(firstSheet);
             
             if (processarDados(jsonData)) {
-                // Atualizar player com novos dados
                 iniciarPlayer(dadosAtuais);
                 atualizarDashboardAdmin();
-                alert('Planilha carregada com sucesso! O painel de exibição foi atualizado.');
+                alert(`✅ Planilha carregada com sucesso!\n\n${dadosAtuais.length} turmas carregadas.\nO painel de exibição foi atualizado automaticamente.`);
                 salvarNoLocalStorage(jsonData);
             }
         };
@@ -767,25 +791,22 @@
         const salvos = localStorage.getItem('dashboardEscolar');
         if (salvos) {
             const dados = JSON.parse(salvos);
-            const dataCarregamento = new Date(dados.data);
-            const hoje = new Date();
-            const diffDias = Math.floor((hoje - dataCarregamento) / (1000 * 60 * 60 * 24));
-            
-            if (diffDias <= 7 && confirm(`Dados carregados em ${dataCarregamento.toLocaleDateString('pt-BR')}. Deseja utilizá-los?`)) {
-                if (processarDados(dados.turmas)) {
-                    iniciarPlayer(dadosAtuais);
-                    atualizarDashboardAdmin();
-                }
+            if (processarDados(dados.turmas)) {
+                iniciarPlayer(dadosAtuais);
+                atualizarDashboardAdmin();
+                document.getElementById('statusTexto').textContent = `${dadosAtuais.length} turmas (salvas)`;
             }
         }
     }
 
-    // Dados de exemplo para demonstração (caso não haja dados salvos)
+    // Dados de exemplo para demonstração
     const dadosExemplo = [
         { "Turma": "3º Série A Noite", "Alunos Ativos": 13, "(%) Presença": 0.9497, "% Faltas Amparadas": 0.0147, "Curso": "TEC EM ENFERMAGEM" },
         { "Turma": "3º Série E Noite", "Alunos Ativos": 40, "(%) Presença": 0.9186, "% Faltas Amparadas": 0.0243, "Curso": "ENSINO MEDIO FGB" },
         { "Turma": "2º Série A Manhã", "Alunos Ativos": 23, "(%) Presença": 0.9093, "% Faltas Amparadas": 0.0519, "Curso": "TEC EM ENFERMAGEM" },
-        { "Turma": "1º Série A Manhã", "Alunos Ativos": 41, "(%) Presença": 0.9076, "% Faltas Amparadas": 0.0341, "Curso": "ENSINO MEDIO IFA" }
+        { "Turma": "1º Série A Manhã", "Alunos Ativos": 41, "(%) Presença": 0.9076, "% Faltas Amparadas": 0.0341, "Curso": "ENSINO MEDIO IFA" },
+        { "Turma": "3º Série C Tarde", "Alunos Ativos": 18, "(%) Presença": 0.9012, "% Faltas Amparadas": 0.0679, "Curso": "NEM EPT IF TEC AGRONEG" },
+        { "Turma": "3º Série A Manhã", "Alunos Ativos": 34, "(%) Presença": 0.897, "% Faltas Amparadas": 0.0294, "Curso": "ENSINO MEDIO FGB" }
     ];
 
     // Inicializar
@@ -793,6 +814,7 @@
         processarDados(dadosExemplo);
         iniciarPlayer(dadosAtuais);
         atualizarDashboardAdmin();
+        document.getElementById('statusTexto').textContent = `${dadosAtuais.length} turmas (exemplo)`;
     } else {
         carregarDadosSalvos();
     }
