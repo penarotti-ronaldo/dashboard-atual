@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Dashboard Escolar - Painel de Presença</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none; /* Evita seleção de texto na TV */
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* ==================== PLAYER DE TELA CHEIA ==================== */
+        .fullscreen-player {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .player-container {
+            text-align: center;
+            color: white;
+            max-width: 1200px;
+            width: 90%;
+            padding: 40px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 30px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        }
+
+        .player-header {
+            margin-bottom: 30px;
+        }
+
+        .player-header h1 {
+            font-size: 2.5em;
+            animation: pulse 2s infinite;
+        }
+
+        .player-header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        @keyframes glow {
+            0% { text-shadow: 0 0 5px rgba(255,215,0,0.5); }
+            100% { text-shadow: 0 0 20px rgba(255,215,0,0.8); }
+        }
+
+        .turma-slide-player {
+            display: none;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        .turma-slide-player.active {
+            display: block;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .turma-nome-player {
+            font-size: 3.5em;
+            font-weight: bold;
+            margin-bottom: 30px;
+            color: #ffd700;
+            animation: glow 1.5s ease-in-out infinite alternate;
+        }
+
+        .presenca-destaque-player {
+            font-size: 8em;
+            font-weight: bold;
+            margin: 30px 0;
+            position: relative;
+            display: inline-block;
+            background: linear-gradient(135deg, #fff, #ffd700);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .presenca-bar-player {
+            width: 500px;
+            max-width: 80%;
+            height: 40px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 20px;
+            margin: 30px auto;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .presenca-bar-fill-player {
+            height: 100%;
+            background: linear-gradient(90deg, #4caf50, #8bc34a, #4caf50);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+            border-radius: 20px;
+            width: 0%;
+            transition: width 1.5s ease;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 200% 0%; }
+        }
+
+        .info-grid-player {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 40px;
+            padding: 20px;
+        }
+
+        .info-card-player {
+            background: rgba(255,255,255,0.15);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        .info-label-player {
+            font-size: 1em;
+            opacity: 0.8;
+            margin-bottom: 10px;
+        }
+
+        .info-value-player {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .progresso-container-player {
+            margin-top: 40px;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .progresso-bar-player {
+            width: 100%;
+            height: 6px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progresso-fill-player {
+            height: 100%;
+            background: linear-gradient(90deg, #ffd700, #ff9800);
+            width: 0%;
+            transition: width 0.3s linear;
+            border-radius: 3px;
+        }
+
+        .contador-player {
+            margin-top: 15px;
+            font-size: 1em;
+            text-align: center;
+        }
+
+        .indicador-loop {
+            margin-top: 20px;
+            font-size: 0.9em;
+            opacity: 0.7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .loop-icon {
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .fullscreen-hint {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.5);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            color: white;
+            z-index: 10001;
+            pointer-events: none;
+            animation: fadeInOut 3s infinite;
+        }
+
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        /* Dashboard admin (escondido atrás do player) */
+        .admin-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 9999;
+            background: rgba(0,0,0,0.7);
+            padding: 10px 20px;
+            border-radius: 10px;
+            color: white;
+            font-size: 0.8em;
+            cursor: pointer;
+            transition: all 0.3s;
+            backdrop-filter: blur(5px);
+        }
+
+        .admin-panel:hover {
+            background: rgba(0,0,0,0.9);
+            transform: scale(1.05);
+        }
+
+        .dashboard-admin {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 9998;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .dashboard-admin.active {
+            display: block;
+        }
+
+        .close-admin {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 9999;
+            font-size: 1em;
+        }
+
+        /* Estilos do dashboard */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .upload-area {
+            background: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .upload-box {
+            border: 2px dashed #667eea;
+            border-radius: 10px;
+            padding: 40px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .upload-box input {
+            display: none;
+        }
+
+        .upload-label {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 25px;
+            cursor: pointer;
+        }
+
+        .dashboard-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        canvas {
+            max-height: 400px;
+            width: 100%;
+        }
+
+        .table-container {
+            grid-column: span 2;
+            padding: 20px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .stats {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            padding: 20px;
+            background: #e3f2fd;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- PLAYER EM TELA CHEIA (LOOP INFINITO) -->
+<div id="fullscreenPlayer" class="fullscreen-player">
+    <div class="player-container">
+        <div class="player-header">
+            <h1>📊 PAINEL DE PRESENÇA</h1>
+            <p>Escola Estadual - Monitoramento de Frequência</p>
+        </div>
+        <div id="playerSlidesContainer"></div>
+        <div class="progresso-container-player">
+            <div class="progresso-bar-player">
+                <div id="progressoFillPlayer" class="progresso-fill-player"></div>
+            </div>
+            <div class="contador-player">
+                <span id="slideAtualPlayer">0</span> / <span id="totalSlidesPlayer">0</span>
+            </div>
+        </div>
+        <div class="indicador-loop">
+            <span class="loop-icon">🔄</span>
+            <span>EXIBIÇÃO CONTÍNUA - ATUALIZAÇÃO AUTOMÁTICA</span>
+            <span class="loop-icon">🔄</span>
+        </div>
+    </div>
+    <div class="fullscreen-hint">
+        🖱️ Clique na tela para entrar/sair do modo tela cheia
+    </div>
+</div>
+
+<!-- Botão Admin (canto inferior esquerdo) -->
+<div class="admin-panel" id="adminBtn">
+    ⚙️ ADMIN - Carregar Planilha
+</div>
+
+<!-- Dashboard Admin (escondido) -->
+<div id="adminDashboard" class="dashboard-admin">
+    <button class="close-admin" onclick="fecharAdmin()">✕ Fechar</button>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Painel Administrativo</h1>
+            <p>Upload de planilha e configurações</p>
+        </div>
+
+        <div class="upload-area">
+            <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+                <input type="file" id="fileInput" accept=".xlsx, .xls, .csv">
+                <div class="upload-label">
+                    📂 Selecionar Planilha da Semana
+                </div>
+                <p style="margin-top: 20px; color: #666;">
+                    Após o upload, o painel de exibição será atualizado automaticamente em loop
+                </p>
+            </div>
+        </div>
+
+        <div class="stats" id="statsPanel">
+            <div class="stat-item">📚 Total de Turmas: <span id="totalTurmas">0</span></div>
+            <div class="stat-item">👨‍🎓 Total de Alunos: <span id="totalAlunos">0</span></div>
+            <div class="stat-item">📈 Média Geral: <span id="mediaGeral">0%</span></div>
+        </div>
+
+        <div class="dashboard-content">
+            <div class="chart-container">
+                <h3>📈 Presença por Turma</h3>
+                <canvas id="presencaChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>⚠️ Faltas Amparadas</h3>
+                <canvas id="faltasChart"></canvas>
+            </div>
+            <div class="table-container">
+                <h3>📋 Detalhamento das Turmas</h3>
+                <div id="tableWrapper"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let presencaChart = null;
+    let faltasChart = null;
+    let dadosAtuais = [];
+    let playerInterval = null;
+    let slideIndex = 0;
+    let turmasParaPlayer = [];
+    let loopAtivo = true;
+    let progressoInterval = null;
+
+    // ==================== FUNÇÕES DO PLAYER EM LOOP ====================
+    function iniciarPlayer(turmas) {
+        turmasParaPlayer = turmas;
+        const container = document.getElementById('playerSlidesContainer');
+        const totalSlidesSpan = document.getElementById('totalSlidesPlayer');
+        
+        totalSlidesSpan.textContent = turmas.length;
+        
+        // Criar slides
+        container.innerHTML = '';
+        turmas.forEach((turma, idx) => {
+            const slide = document.createElement('div');
+            slide.className = 'turma-slide-player';
+            slide.id = `playerSlide_${idx}`;
+            slide.innerHTML = `
+                <div class="turma-nome-player">🏫 ${turma.turma}</div>
+                <div class="presenca-destaque-player" id="presencaNumPlayer_${idx}">0%</div>
+                <div class="presenca-bar-player">
+                    <div id="presencaBarPlayer_${idx}" class="presenca-bar-fill-player" style="width: 0%"></div>
+                </div>
+                <div class="info-grid-player">
+                    <div class="info-card-player">
+                        <div class="info-label-player">👨‍🎓 ALUNOS ATIVOS</div>
+                        <div class="info-value-player">${turma.alunos}</div>
+                    </div>
+                    <div class="info-card-player">
+                        <div class="info-label-player">⚠️ FALTAS AMPARADAS</div>
+                        <div class="info-value-player">${turma.faltasAmparadas.toFixed(1)}%</div>
+                    </div>
+                    <div class="info-card-player">
+                        <div class="info-label-player">📚 CURSO</div>
+                        <div class="info-value-player" style="font-size:1em;">${turma.curso.substring(0, 40)}${turma.curso.length > 40 ? '...' : ''}</div>
+                    </div>
+                </div>
+            `;
+            container.appendChild(slide);
+        });
+        
+        // Iniciar loop
+        slideIndex = 0;
+        pararPlayer();
+        iniciarLoop();
+    }
+
+    function mostrarSlidePlayer(index) {
+        const slides = document.querySelectorAll('.turma-slide-player');
+        if (slides.length === 0) return;
+        
+        slides.forEach((slide, i) => {
+            slide.classList.remove('active');
+        });
+        
+        if (slides[index]) {
+            slides[index].classList.add('active');
+            document.getElementById('slideAtualPlayer').textContent = index + 1;
+            
+            // Animar a barra de porcentagem
+            const turma = turmasParaPlayer[index];
+            const barElement = document.getElementById(`presencaBarPlayer_${index}`);
+            const numElement = document.getElementById(`presencaNumPlayer_${index}`);
+            
+            if (barElement && numElement) {
+                let percentual = 0;
+                const targetPercentual = turma.presenca;
+                const incremento = targetPercentual / 40;
+                
+                if (window.barraInterval) clearInterval(window.barraInterval);
+                
+                window.barraInterval = setInterval(() => {
+                    percentual += incremento;
+                    if (percentual >= targetPercentual) {
+                        percentual = targetPercentual;
+                        clearInterval(window.barraInterval);
+                    }
+                    barElement.style.width = `${percentual}%`;
+                    numElement.textContent = `${percentual.toFixed(1)}%`;
+                }, 25);
+            }
+        }
+    }
+
+    function iniciarLoop() {
+        const total = turmasParaPlayer.length;
+        let tempoPorSlide = 5000; // 5 segundos por slide
+        
+        function avancarSlide() {
+            if (!loopAtivo) return;
+            
+            slideIndex++;
+            if (slideIndex >= total) {
+                slideIndex = 0;
+                // Reiniciar barra de progresso ao completar ciclo
+                resetProgressoBar();
+            }
+            mostrarSlidePlayer(slideIndex);
+            atualizarBarraProgresso(slideIndex, total);
+        }
+        
+        // Mostrar primeiro slide
+        mostrarSlidePlayer(0);
+        atualizarBarraProgresso(0, total);
+        
+        // Configurar intervalo
+        if (playerInterval) clearInterval(playerInterval);
+        playerInterval = setInterval(avancarSlide, tempoPorSlide);
+    }
+
+    function atualizarBarraProgresso(current, total) {
+        const progressFill = document.getElementById('progressoFillPlayer');
+        if (progressFill) {
+            const percentual = ((current + 1) / total) * 100;
+            progressFill.style.width = `${percentual}%`;
+        }
+    }
+
+    function resetProgressoBar() {
+        const progressFill = document.getElementById('progressoFillPlayer');
+        if (progressFill) {
+            progressFill.style.width = '0%';
+            setTimeout(() => {
+                if (loopAtivo && turmasParaPlayer.length > 0) {
+                    progressFill.style.width = `${(1 / turmasParaPlayer.length) * 100}%`;
+                }
+            }, 100);
+        }
+    }
+
+    function pararPlayer() {
+        if (playerInterval) {
+            clearInterval(playerInterval);
+            playerInterval = null;
+        }
+        if (window.barraInterval) {
+            clearInterval(window.barraInterval);
+        }
+    }
+
+    // ==================== TELA CHEIA ====================
+    const playerElement = document.getElementById('fullscreenPlayer');
+    
+    function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            playerElement.requestFullscreen().catch(err => {
+                console.log(`Erro ao entrar em tela cheia: ${err.message}`);
+            });
+        } else {
+            document.exitFullscreen();
+        }
+    }
+    
+    playerElement.addEventListener('click', toggleFullscreen);
+    
+    // Escutar mudanças na tela cheia para ajustar layout
+    document.addEventListener('fullscreenchange', () => {
+        if (document.fullscreenElement) {
+            playerElement.style.cursor = 'pointer';
+        }
+    });
+
+    // ==================== PROCESSAMENTO DOS DADOS ====================
+    function processarDados(dados) {
+        const turmasValidas = dados.filter(row => {
+            return row['Turma'] && 
+                   row['Alunos Ativos'] && 
+                   row['(%) Presença'] !== undefined &&
+                   row['% Faltas Amparadas'] !== undefined;
+        });
+
+        if (turmasValidas.length === 0) {
+            alert('Nenhum dado válido encontrado na planilha. Verifique as colunas.');
+            return false;
+        }
+
+        dadosAtuais = turmasValidas.map(row => ({
+            turma: row['Turma'],
+            alunos: parseInt(row['Alunos Ativos']) || 0,
+            presenca: parseFloat(row['(%) Presença']) * 100 || 0,
+            faltasAmparadas: parseFloat(row['% Faltas Amparadas']) * 100 || 0,
+            curso: row['Curso'] || 'N/A'
+        }));
+
+        return true;
+    }
+
+    function atualizarDashboardAdmin() {
+        const totalTurmas = dadosAtuais.length;
+        const totalAlunos = dadosAtuais.reduce((sum, t) => sum + t.alunos, 0);
+        const mediaPresenca = dadosAtuais.reduce((sum, t) => sum + t.presenca, 0) / totalTurmas;
+
+        document.getElementById('totalTurmas').textContent = totalTurmas;
+        document.getElementById('totalAlunos').textContent = totalAlunos;
+        document.getElementById('mediaGeral').textContent = mediaPresenca.toFixed(1) + '%';
+
+        // Gráficos
+        const labels = dadosAtuais.map(t => t.turma);
+        const presencas = dadosAtuais.map(t => t.presenca);
+        const faltas = dadosAtuais.map(t => t.faltasAmparadas);
+
+        const ctxPresenca = document.getElementById('presencaChart').getContext('2d');
+        if (presencaChart) presencaChart.destroy();
+        
+        presencaChart = new Chart(ctxPresenca, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Presença (%)',
+                    data: presencas,
+                    backgroundColor: 'rgba(76, 175, 80, 0.7)',
+                    borderRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: { y: { beginAtZero: true, max: 100 } }
+            }
+        });
+
+        const ctxFaltas = document.getElementById('faltasChart').getContext('2d');
+        if (faltasChart) faltasChart.destroy();
+        
+        faltasChart = new Chart(ctxFaltas, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Faltas Amparadas (%)',
+                    data: faltas,
+                    backgroundColor: 'rgba(255, 152, 0, 0.7)',
+                    borderRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: { y: { beginAtZero: true, max: 100 } }
+            }
+        });
+
+        // Tabela
+        const wrapper = document.getElementById('tableWrapper');
+        let html = '<table><thead><tr><th>Turma</th><th>Alunos</th><th>Presença</th><th>Faltas Amparadas</th><th>Curso</th></tr></thead><tbody>';
+        dadosAtuais.forEach(t => {
+            html += `<tr><td><strong>${t.turma}</strong></td><td>${t.alunos}</td><td>${t.presenca.toFixed(1)}%</td><td>${t.faltasAmparadas.toFixed(1)}%</td><td>${t.curso}</td></tr>`;
+        });
+        html += '</tbody></table>';
+        wrapper.innerHTML = html;
+    }
+
+    // ==================== ADMIN ====================
+    function abrirAdmin() {
+        document.getElementById('adminDashboard').classList.add('active');
+        if (dadosAtuais.length > 0) {
+            atualizarDashboardAdmin();
+        }
+    }
+
+    function fecharAdmin() {
+        document.getElementById('adminDashboard').classList.remove('active');
+    }
+
+    document.getElementById('adminBtn').addEventListener('click', abrirAdmin);
+
+    // Upload da planilha
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+            
+            if (processarDados(jsonData)) {
+                // Atualizar player com novos dados
+                iniciarPlayer(dadosAtuais);
+                atualizarDashboardAdmin();
+                alert('Planilha carregada com sucesso! O painel de exibição foi atualizado.');
+                salvarNoLocalStorage(jsonData);
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    });
+
+    function salvarNoLocalStorage(dados) {
+        localStorage.setItem('dashboardEscolar', JSON.stringify({
+            data: new Date().toISOString(),
+            turmas: dados
+        }));
+    }
+
+    function carregarDadosSalvos() {
+        const salvos = localStorage.getItem('dashboardEscolar');
+        if (salvos) {
+            const dados = JSON.parse(salvos);
+            const dataCarregamento = new Date(dados.data);
+            const hoje = new Date();
+            const diffDias = Math.floor((hoje - dataCarregamento) / (1000 * 60 * 60 * 24));
+            
+            if (diffDias <= 7 && confirm(`Dados carregados em ${dataCarregamento.toLocaleDateString('pt-BR')}. Deseja utilizá-los?`)) {
+                if (processarDados(dados.turmas)) {
+                    iniciarPlayer(dadosAtuais);
+                    atualizarDashboardAdmin();
+                }
+            }
+        }
+    }
+
+    // Dados de exemplo para demonstração (caso não haja dados salvos)
+    const dadosExemplo = [
+        { "Turma": "3º Série A Noite", "Alunos Ativos": 13, "(%) Presença": 0.9497, "% Faltas Amparadas": 0.0147, "Curso": "TEC EM ENFERMAGEM" },
+        { "Turma": "3º Série E Noite", "Alunos Ativos": 40, "(%) Presença": 0.9186, "% Faltas Amparadas": 0.0243, "Curso": "ENSINO MEDIO FGB" },
+        { "Turma": "2º Série A Manhã", "Alunos Ativos": 23, "(%) Presença": 0.9093, "% Faltas Amparadas": 0.0519, "Curso": "TEC EM ENFERMAGEM" },
+        { "Turma": "1º Série A Manhã", "Alunos Ativos": 41, "(%) Presença": 0.9076, "% Faltas Amparadas": 0.0341, "Curso": "ENSINO MEDIO IFA" }
+    ];
+
+    // Inicializar
+    if (!localStorage.getItem('dashboardEscolar')) {
+        processarDados(dadosExemplo);
+        iniciarPlayer(dadosAtuais);
+        atualizarDashboardAdmin();
+    } else {
+        carregarDadosSalvos();
+    }
+</script>
+</body>
+</html>
